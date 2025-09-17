@@ -1,0 +1,33 @@
+﻿@{
+    ViewData["Title"] = "Конвертер валют";
+}
+
+<h2>Конвертер валют</h2>
+
+@if(ViewBag.Error != null)
+{
+    <div style="color:red">@ViewBag.Error</div>
+}
+
+<form method="post" style="margin-top:20px">
+    <div>
+        <label>Из валюты (например, USD):</label>
+        <input type="text" name="from" value="@ViewBag.From" required />
+    </div>
+    <div>
+        <label>В валюту (например, EUR):</label>
+        <input type="text" name="to" value="@ViewBag.To" required />
+    </div>
+    <div>
+        <label>Сумма:</label>
+        <input type="number" name="amount" value="@ViewBag.Amount" step="0.01" required />
+    </div>
+    <div style="margin-top:10px">
+        <button type="submit">Конвертировать</button>
+    </div>
+</form>
+
+@if(ViewBag.Result != null)
+{
+    <h3>Результат: @ViewBag.Result @ViewBag.To</h3>
+}
