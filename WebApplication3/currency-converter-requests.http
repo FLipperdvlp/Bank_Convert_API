@@ -1,0 +1,14 @@
+GET http://localhost:5295/api/home/currency
+Accept: application/json
+
+###
+
+### 2. Получить курсы валют
+GET http://localhost:5295/api/home/currency/rates
+Accept: application/json
+
+###
+
+### 3. Получить информацию о пользователе
+GET http://localhost:5295/api/home/user
+Accept: application/json
