@@ -1,6 +1,7 @@
-﻿using WebApplication3.Models;
-
-namespace WebApplication3.Services;
+﻿using System.Globalization;
+using Bank_Convert_API.Models;
+//using Microsoft.AspNetCore.Mvc;
+namespace Bank_Convert_API.Services;
 
 public class CurrencyRateService
 {
@@ -13,16 +14,8 @@ public class CurrencyRateService
 
     private async Task<List<CurrencyRate>?> GetRatesAsync()
     {
-        try
-        {
-            return await _httpClient.GetFromJsonAsync<List<CurrencyRate>>(
-                "https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5"
-            );
-        }
-        catch (Exception)
-        {
-            return null;
-        }
+        return await _httpClient.GetFromJsonAsync<List<CurrencyRate>>(
+            "https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5" );
     }
 
     public async Task<CurrencyInfo> GetCurrencyInfoAsync()
@@ -44,5 +37,54 @@ public class CurrencyRateService
     public async Task<List<CurrencyRate>?> GetCurrencyRatesAsync()
     {
         return await GetRatesAsync();
+    }
+
+    public async Task<decimal?> ConvertAsync(string from, string to, decimal amount)
+    {
+        var rates = await GetRatesAsync();
+        if (rates == null) { return null; }
+
+        var fromRate = rates.FirstOrDefault(r => r.Ccy == from.ToUpper());
+        var toRate = rates.FirstOrDefault(r => r.Ccy == to.ToUpper());
+
+        decimal amountInUah;
+        if (from.ToUpper() == "UAH")
+        {
+            amountInUah = amount;
+        }
+        else if (fromRate != null)
+        {
+            amountInUah = amount * decimal.Parse(fromRate.Sale, CultureInfo.InvariantCulture);
+        }
+        else
+        {
+            return null;
+        }
+
+        if (to.ToUpper() == "UAH")
+        {
+            return amountInUah;
+        }
+        else if (toRate != null)
+        {
+            return amountInUah / decimal.Parse(toRate.Sale, CultureInfo.InvariantCulture);
+        }
+
+        return null;
+    }
+
+
+    public CurrencyInfo GetCurrencyInfo()
+    {
+        var rates = GetRatesAsync().Result;
+        var currencyInfo = new CurrencyInfo();
+
+        foreach (var rate in rates)
+        {
+            currencyInfo.From.Add(rate.Ccy);
+            currencyInfo.To.Add(rate.Ccy);
+        }
+
+        return currencyInfo;
     }
 }
