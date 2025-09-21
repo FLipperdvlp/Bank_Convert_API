@@ -1,52 +1,44 @@
+using Bank_Convert_API.Models;
+using Bank_Convert_API.Services;
 using Microsoft.AspNetCore.Mvc;
-using WebApplication3.Models;
-using WebApplication3.Services;
 
-namespace WebApplication3.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-public class HomeController : ControllerBase
+public class HomeController : Controller
 {
-    private readonly ILogger<HomeController> _logger;
-    private readonly CurrencyRateService _currencyService;
+    private readonly CurrencyRateService currencyRateService;
 
-    public HomeController(ILogger<HomeController> logger, CurrencyRateService currencyService)
+    public HomeController(CurrencyRateService currencyRateService)
     {
-        _logger = logger;
-        _currencyService = currencyService;
+        this.currencyRateService = currencyRateService;
     }
 
-    [HttpGet("user")]
-    public ActionResult<object> GetUser()
+    public IActionResult Index()
     {
-        var user = new
+        var currencyInfo = currencyRateService.GetCurrencyInfo();
+        currencyInfo.From.Add("UAH");
+        currencyInfo.To.Add("UAH");
+
+        return View(currencyInfo);//a
+    }
+
+    public IActionResult Convert(ConvertViewModel convertViewModel)
+    {
+        var convertRes = currencyRateService.ConvertAsync(
+            convertViewModel.From,
+            convertViewModel.To,
+            convertViewModel.Amount
+        ).Result;
+
+        if (convertRes.HasValue)
         {
-            Name = "Gleb",
-            Surname = "Renkas"
-        };
-        return Ok(user);
-    }
-
-    [HttpGet("currency")]
-    public async Task<ActionResult<CurrencyInfo>> GetCurrency()
-    {
-        var currencyInfo = await _currencyService.GetCurrencyInfoAsync();
-        if (!currencyInfo.From.Contains("UAH"))
-            currencyInfo.From.Add("UAH");
-        if (!currencyInfo.To.Contains("UAH"))
-            currencyInfo.To.Add("UAH");
-        return Ok(currencyInfo);
-    }
-
-    [HttpGet("currency/rates")]
-    public async Task<ActionResult<List<CurrencyRate>>> GetCurrencyRates()
-    {
-        var rates = await _currencyService.GetCurrencyRatesAsync();
-        if (rates == null)
-        {
-            return NotFound();
+            convertRes = Math.Round(convertRes.Value, 2);
         }
-        return Ok(rates);
+
+        var currencyInfo = currencyRateService.GetCurrencyInfo();
+        currencyInfo.From.Add("UAH");
+        currencyInfo.To.Add("UAH");
+
+        ViewBag.Result = convertRes;
+        return View("Index", currencyInfo);
     }
+
 }
